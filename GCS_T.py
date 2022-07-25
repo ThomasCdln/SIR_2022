@@ -43,8 +43,25 @@ def handleWifiMsg():
                 print("receive wifi msg from :"+str(i)+" msg is : "+str(msg))
                 if "video" in msg:
                     print("GCS receive the video from the drone")
-                    vehicles[i].wifiMsgGcs = "VID:OK"
+                    print("msg received by GCS : "+str(msg))
+                    # if Halow
+                    #vehicles[i].wifiFromGcs = "VID:OK"
+                    sMsg = msg.split(":")
+                    if len(sMsg) == 3:
+                        command = sMsg[0]
+                        parameters = sMsg[1]
+                        plainSendingPath = sMsg[2]
+                        idSendingPath = plainSendingPath.split(";")
+                        reverseSendingPath = idSendingPath[::-1]
+                        print("reverseSendingPath : "+str(reverseSendingPath))
+                        msgToSend = "video:ok:"+str(listToString(reverseSendingPath,";"))
+                        print("msgToSend : "+msgToSend)
+                        vehicles[i].wifiFromGcs = msgToSend
+                    
                     numberOfDetectedPoints -= 1
+                    vehicles[i].wifiMsgGcs = None
+                    
+                    # if Halow
                     if msg[-1] == str(i):
                         sendHalowMsg(i, "START")
                     else:
@@ -53,7 +70,27 @@ def handleWifiMsg():
                     print("There are "+str(numberOfDetectedPoints)+" points left")
                 else:
                     vehicles[i].wifiMsgGcs = None
-        time.sleep(0.1)
+        time.sleep(0.5)
+
+
+def listToString(listed, separator=None):
+    '''
+        Method to transform a list into a string
+
+        Params :
+            listed : the list that have to be transformed
+            space : boolean wich specify if spaces have to be added between list elements
+
+        return : a string containing all the elements of listed 
+    '''
+    string = ""
+    for s in listed:
+        string+= str(s)
+        if separator != None :
+            string+= separator
+    if separator == None:
+        string += " "
+    return string[:-1]
 
 
 def handleHalowMsg():
@@ -362,8 +399,11 @@ def main():
         # vehicles[i] = Vehicle(i, lIP, home)
         # vehicles[i].isHalow = True  # the drone have Wifi halow
         #vehicles[i] = Vehicle(i, lIP, True) # for debug purposes
+        #if i ==1:
         vehicles[i] = Vehicle({"nInstance":i, "lIP":lIP, "logging":True})
-        vehicles[i].isHalow = True # setted to true if the drone have an Halow interface, False otherwise
+        #else:
+        #    vehicles[i] = Vehicle({"nInstance":i, "lIP":lIP, "logging":False}) 
+        vehicles[i].isHalow = False # setted to true if the drone have an Halow interface, False otherwise
         print("instance " + str(i) + " created")
 
     # Launch GCS halow messages handler 
