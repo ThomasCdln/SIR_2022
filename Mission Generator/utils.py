@@ -1,4 +1,5 @@
 from math import pi,sqrt,atan2,radians,degrees,cos,sin,asin,ceil
+import random
 
 def getBearing(lat1, lng1, lat2, lng2):
 	diffLng = lng2 - lng1
@@ -9,8 +10,8 @@ def getBearing(lat1, lng1, lat2, lng2):
 	#to go from the [-180;180] range to the [0;360] range
 	
 def getDistance(lat1, lng1, lat2, lng2, alt=6731000 ) :
-	if alt != 6731000:
-		alt += 6731000
+	if alt<6731000:
+		alt+=6731000
 	#écart en degré
 	diffLat = abs(lat1-lat2)
 	diffLng = abs(lng1-lng2)
@@ -21,14 +22,14 @@ def getDistance(lat1, lng1, lat2, lng2, alt=6731000 ) :
 	ecart=sqrt(distLat**2+distLng**2)
 	return ecart
 
-def nbDroneMin(lat1, lng1, lat2, lng2, alt ) :
+def nbDroneMin(lat1, lng1, lat2, lng2, alt=6731000 ) :
 	#si le GCS est dans le coin de la piste :
-	return max(1,ceil(getDistance(lat1, lng1, lat2, lng2, alt )/100)-1)
+	return max(1,ceil(getDistance(lat1, lng1, lat2, lng2, alt)/100)-1)
 	#si il est au centre: return ceil(max(1,distanceSol(lat1, lng1, lat2, lng2, alt )/100)/2)
 
 def newProjectedPoint (lat, lng, bearing, distance, alt=6731000):
-	if alt != 6731000:
-		alt += 6731000
+	if alt<6731000:
+		alt+=6731000
 	pos=[]
 	#convertion en rad
 	lat = radians(lat)
@@ -40,12 +41,27 @@ def newProjectedPoint (lat, lng, bearing, distance, alt=6731000):
 	#reconvertion en degres
 	return pos
 
-def createChain(lat1, lng1, lat2, lng2, altDrone=673100):
+def newProjectedPoI (lat1, lng1, lat2, lng2, lat3, lng3, alt=673100):
+	if alt<6731000:
+		alt+=6731000
+	#définir l'axe de la piste
+	rwyForward = getBearing(lat1,lng1,lat2,lng2)
+	rwyRight = getBearing(lat1,lng1,lat3,lng3)
+	#définir les dimentions de la piste (repère cardinal relatif)
+	distForward = getDistance(lat1,lng1,lat2,lng1,alt)
+	distRight = getDistance(lat1, lng1, lat3, lng3, alt)
+	#calcul des coordonees
+	pos=[]
+	pos.append(newProjectedPoint(lat1,lng1,rwyForward,random.uniform(0,distForward))[0])
+	pos.append(newProjectedPoint(lat1,lng1,rwyRight,random.uniform(0,distRight))[1])
+	return pos
+
+def createChain(lat1, lng1, lat2, lng2, alt=673100):
+	if alt<6731000:
+		alt+=6731000
 	pointList={}
 	bearing = getBearing(lat1, lng1, lat2, lng2)
-	if altDrone != 6731:
-		altDrone += 6731000
-	totalDist = getDistance(lat1, lng1, lat2, lng2, altDrone)
+	totalDist = getDistance(lat1, lng1, lat2, lng2, alt)
 	neededNumber=totalDist//100+1
 	step=totalDist/neededNumber
 	currentDist=0
@@ -53,7 +69,7 @@ def createChain(lat1, lng1, lat2, lng2, altDrone=673100):
 	currentLng= lng1
 	numIter=0
 	while currentDist < totalDist:
-		point = newProjectedPoint(currentLat, currentLng, bearing, step,  altDrone)
+		point = newProjectedPoint(currentLat, currentLng, bearing, step,  alt)
 		currentLat=point[0]
 		currentLng=point[1]
 		currentDist+=step
@@ -61,7 +77,9 @@ def createChain(lat1, lng1, lat2, lng2, altDrone=673100):
 		numIter+=1
 	return pointList
 
-def pathMaker (lat1, lng1, lat2, lng2, lat3, lng3, altPiste, scanWidth=2, altVol=5, nbDrone=1):
+def pathMaker (lat1, lng1, lat2, lng2, lat3, lng3, alt, scanWidth=2, altVol=5, nbDrone=1):
+	if alt<6731000:
+		alt+=6731000
 	pointList = {}
 	numEtape = 0
 	#définir l'axe de la piste
@@ -69,10 +87,10 @@ def pathMaker (lat1, lng1, lat2, lng2, lat3, lng3, altPiste, scanWidth=2, altVol
 	rwyBackward = getBearing(lat2,lng2,lat1,lng1)
 	rwyRight = getBearing(lat1,lng1,lat3,lng3)
 	#définir les dimentions de la piste (repère cardinal relatif)
-	distUp = getDistance(lat1,lng1,lat2,lng1,altPiste)
-	distRight = getDistance(lat1,lng1,lat1,lng2,altPiste)
+	distForward = getDistance(lat1,lng1,lat2,lng2,alt)
+	distRight = getDistance(lat1,lng1,lat3,lng3,alt)
 	#définir la pose de départ
-	altVol += altPiste
+	altVol += alt
 	posDepart = newProjectedPoint(lat1, lng1, altVol, (rwyForward+45+360)%360, scanWidth/2*sqrt(2))
 	pointList[numEtape] = posDepart
 	numEtape+=1
@@ -84,7 +102,7 @@ def pathMaker (lat1, lng1, lat2, lng2, lat3, lng3, altPiste, scanWidth=2, altVol
 	currdistRight=0
 	while currdistRight<distRight-scanWidth:
 		if dir==1: #vers le nord
-			point = newProjectedPoint(latDrone, lngDrone, rwyForward, distUp-scanWidth)
+			point = newProjectedPoint(latDrone, lngDrone, rwyForward, distForward-scanWidth)
 			dir=3
 			prevDir=1
 			latDrone=point[0]
@@ -93,7 +111,7 @@ def pathMaker (lat1, lng1, lat2, lng2, lat3, lng3, altPiste, scanWidth=2, altVol
 			pointList[numEtape]=point
 			numEtape+=1
 		elif dir==2: #vers le sud
-			point = newProjectedPoint(latDrone, lngDrone, rwyBackward, distUp-scanWidth)
+			point = newProjectedPoint(latDrone, lngDrone, rwyBackward, distForward-scanWidth)
 			dir=3
 			prevDir=2
 			latDrone=point[0]
@@ -122,22 +140,12 @@ def pathMaker (lat1, lng1, lat2, lng2, lat3, lng3, altPiste, scanWidth=2, altVol
 	return pointList
 
 
-def zones(lat1, lng1, lat2, lng2, lat3, lng3,altPiste):
-	rwyForward = getBearing(lat1,lng1,lat2,lng2)
-	missionList={}
-	nbDrone=nbDroneMin(lat2,lng2,lat3,lng3,altPiste)
-	longTot=getDistance(lat1,lng1,lat2,lng2,altPiste)
-	longZone=longTot/nbDrone
-	oldPoint=[]
-	newPoint=[]
-	newPoint=newProjectedPoint(lat1, lng1, rwyForward,longZone,altPiste)
-	print(newPoint)
-	print(nbDrone)
-	for i in range(nbDrone):
-		missionList[i]=pathMaker(lat1, lng1, lat2, lng2, lat3, lng3, altPiste)
-		oldPoint=newPoint
-		newPoint=newProjectedPoint (oldPoint[0], oldPoint[1], rwyForward, longZone, altPiste)
-		#print(newPoint,i)
-	return missionList
+def poiGenerator(lat1, lng1, lat2, lng2, lat3, lng3, nbPoints,alt=6731000):
+	if alt<6731000:
+		alt+=6731000
+	poiList=[]
+	for i in range(nbPoints):
+		poiList.append(newProjectedPoI(lat1, lng1, lat2, lng2, lat3, lng3, alt))
+	return poiList
 
-print(zones (41.2823216,2.0735461,41.2818459,2.0738196,41.2926877,2.1037970, 10))
+print(poiGenerator(41.2823216,2.0735461,41.2818459,2.0738196,41.2926877,2.1037970, 10,5))
