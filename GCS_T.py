@@ -5,9 +5,15 @@ from vehicle import Vehicle, getGcsPos
 import random
 import os
 from Random_point_generator import RandomPointGenerator
-import math 
+import math
 import numpy as np
 from threading import Thread
+
+######## PARAMETERS ########
+isHalow = True  # Set it to true to allow the halow communication on drones
+numberOfDronesInstances = 3
+
+######## PARAMETERS ########
 
 
 # CONSTANTS :
@@ -20,7 +26,7 @@ gcsLon = 0
 gcsAlt = 0
 #############
 
-# GLOBAL VARIABLES : 
+# GLOBAL VARIABLES :
 vehicles = {}
 lastSendHalow = {}
 tHalow = None
@@ -30,22 +36,25 @@ alignDrones = {}
 selectedDrones = []
 ####################
 
+
 def handleWifiMsg():
     '''
         Method to handle classic wifi messages
         Run as a thread
     '''
-    global vehicles, continu, numberOfDetectedPoints, selectedDrones
+    global vehicles, continu, numberOfDetectedPoints, selectedDrones, isHalow
     while continu:
-        for i in range(1, len(vehicles)+1):
+        for i in range(1, len(vehicles) + 1):
             msg = vehicles[i].getWifiMsg()
-            if msg != None:
-                print("receive wifi msg from :"+str(i)+" msg is : "+str(msg))
+            if msg is not None:
+                print(
+                    "receive wifi msg from :" +
+                    str(i) +
+                    " msg is : " +
+                    str(msg))
                 if "video" in msg:
                     print("GCS receive the video from the drone")
-                    print("msg received by GCS : "+str(msg))
-                    # if Halow
-                    #vehicles[i].wifiFromGcs = "VID:OK"
+                    print("msg received by GCS : " + str(msg))
                     sMsg = msg.split(":")
                     if len(sMsg) == 3:
                         command = sMsg[0]
@@ -53,23 +62,25 @@ def handleWifiMsg():
                         plainSendingPath = sMsg[2]
                         idSendingPath = plainSendingPath.split(";")
                         reverseSendingPath = idSendingPath[::-1]
-                        print("reverseSendingPath : "+str(reverseSendingPath))
-                        msgToSend = "video:ok:"+str(listToString(reverseSendingPath,";"))
-                        print("msgToSend : "+msgToSend)
-                        vehicles[i].wifiFromGcs = msgToSend
-                    
+
+                        if isHalow:
+                            for d in idSendingPath:
+                                if d != "0":
+                                    sendHalowMsg(int(d), "START")
+                        else:
+                            msgToSend = "video:ok:" + \
+                                str(listToString(reverseSendingPath, ";"))
+                            print("msgToSend : " + msgToSend)
+                            vehicles[i].wifiFromGcs = msgToSend
+
+                    # Decrease the number of points to discover
                     numberOfDetectedPoints -= 1
+                    # Resetting the current message
                     vehicles[i].wifiMsgGcs = None
-                    
-                    # if Halow
-                    if msg[-1] == str(i):
-                        sendHalowMsg(i, "START")
-                    else:
-                        for d in selectedDrones:
-                            sendHalowMsg(d, "START")
-                    print("There are "+str(numberOfDetectedPoints)+" points left")
-                else:
-                    vehicles[i].wifiMsgGcs = None
+                    print(
+                        "There are " +
+                        str(numberOfDetectedPoints) +
+                        " points left")
         time.sleep(0.5)
 
 
@@ -81,14 +92,14 @@ def listToString(listed, separator=None):
             listed : the list that have to be transformed
             space : boolean wich specify if spaces have to be added between list elements
 
-        return : a string containing all the elements of listed 
+            return : a string containing all the elements of listed
     '''
     string = ""
     for s in listed:
-        string+= str(s)
-        if separator != None :
-            string+= separator
-    if separator == None:
+        string += str(s)
+        if separator is not None:
+            string += separator
+    if separator is None:
         string += " "
     return string[:-1]
 
@@ -104,44 +115,56 @@ def handleHalowMsg():
     rLon = None
     fPart = None
     sPart = None
-    while continu :
-        for i in range(1, len(vehicles)+1):
+    while continu:
+        for i in range(1, len(vehicles) + 1):
             msg = vehicles[i].halowMsg
-            if not (i in lastSendHalow): # for initialisation purpose only
+            if not (i in lastSendHalow):  # for initialisation purpose only
                 lastSendHalow[i] = None
-            if msg != lastSendHalow[i] and msg!=None:
-                print("receive wifi hallow msg from :"+str(i)+" msg is : "+str(msg))
+            if msg != lastSendHalow[i] and msg is not None:
+                print(
+                    "receive wifi hallow msg from :" +
+                    str(i) +
+                    " msg is : " +
+                    str(msg))
                 resetHalowMsg(i)
                 lMsg = msg.split(':')
-                if len(lMsg)==2:
+                if len(lMsg) == 2:
                     if lMsg[0] == "IP":
                         # A drone have detected an IP
                         sMsg = lMsg[1].split(";")
-                        print("IP detected by drone : "+str(i)+" at "+str(sMsg))
+                        print(
+                            "IP detected by drone : " +
+                            str(i) +
+                            " at " +
+                            str(sMsg))
                         handleAlignR(sMsg[0], sMsg[1], i)
                     elif lMsg[0] == "ALIGN":
                         if lMsg[1] == "OK":
-                        # The drone getted to asked position
-                            print("drone "+str(i)+" is aligned")
+                            # The drone getted to asked position
+                            print("drone " + str(i) + " is aligned")
                     elif lMsg[0] == "VID":
                         if lMsg[1] == "OK":
                             print("Video have been sent")
                     elif lMsg[0] == "POS":
                         sMsg = lMsg[1].split(";")
-                        if len(sMsg)==3:
+                        if len(sMsg) == 3:
                             # The drone gives its position
-                            print("Drone "+str(i)+" position is : "+str(sMsg))
+                            print(
+                                "Drone " +
+                                str(i) +
+                                " position is : " +
+                                str(sMsg))
                         else:
-                            print("Drone "+str(i)+" doesn't have the right position message")
+                            print(
+                                "Drone " +
+                                str(i) +
+                                " doesn't have the right position message")
                     else:
                         print("Message doesn't have the right format")
                 else:
                     time.sleep(0.1)
-                
-                    
 
 
-                    
 def handleAlignR(aLat, aLon, rId):
     '''
         Method to handle the alignment for creating the multi hop network
@@ -149,11 +172,23 @@ def handleAlignR(aLat, aLon, rId):
     global gcsLat, gcsLon, vehicles, gcsAlt, alignDrones, selectedDrones
     time.sleep(1)
     gcsLat, gcsLon, gcsAlt = getGcsPos()
-    print("gcsLat, gcsLon, gcsAlt : "+str(gcsLat) + " " + str(gcsLon) + " " + str(gcsAlt))
+    print(
+        "gcsLat, gcsLon, gcsAlt : " +
+        str(gcsLat) +
+        " " +
+        str(gcsLon) +
+        " " +
+        str(gcsAlt))
     selectedDrones = []
-    selectedDrones.append(rId)                     
+    selectedDrones.append(rId)
     dronesPositions = getDronesPosHalow()
-    points = genPointsArray(gcsLat, gcsLon, gcsAlt, float(aLat), float(aLon), gcsAlt)
+    points = genPointsArray(
+        gcsLat,
+        gcsLon,
+        gcsAlt,
+        float(aLat),
+        float(aLon),
+        gcsAlt)
     print(points)
     print(dronesPositions)
     for p in points:
@@ -171,15 +206,16 @@ def handleAlignR(aLat, aLon, rId):
                     bestId = iD
         selectedDrones.append(bestId)
         #######################################################
-        alignDrones[bestId] = [rLat,rLon]
+        alignDrones[bestId] = [rLat, rLon]
         #######################################################
-        
+
     # sending order to selected drones to align
     print("Align drones : " + str(alignDrones))
     for aD in alignDrones:
         rPos = alignDrones[aD]
-        sendHalowMsg(aD, "ALIGN:"+str(rPos[0])+";"+str(rPos[1])) # ask drone to get to position
-    #####################################################################################
+        # ask drone to get to position
+        sendHalowMsg(aD, "ALIGN:" + str(rPos[0]) + ";" + str(rPos[1]))
+    ##########################################################################
     # check if selected drones are at position
     arrived = False
     for aD in alignDrones:
@@ -193,13 +229,12 @@ def handleAlignR(aLat, aLon, rId):
     # sending the list of aligned drones to the requester drone
     msg = "ALIGNED:"
     for iD in alignDrones:
-        msg += str(iD)+";"
-    sendHalowMsg(rId, msg[:-1]) # we send the list of aligned drones to the requester ( and drop the last ;)
-        
-                    
+        msg += str(iD) + ";"
+    # we send the list of aligned drones to the requester ( and drop the last
+    # ;)
+    sendHalowMsg(rId, msg[:-1])
 
-    
-    
+
 def getDronesPosHalow(iD=None):
     '''
         Method that asks all drones their position
@@ -210,23 +245,22 @@ def getDronesPosHalow(iD=None):
     '''
     global vehicles
     pos = {}
-    sendAllExceptOneHalow("POS", None) # ask drones for their position
+    sendAllExceptOneHalow("POS", None)  # ask drones for their position
     # getting awnsers
-    for i in range(1, len(vehicles)+1):
-        if i!=iD:
+    for i in range(1, len(vehicles) + 1):
+        if i != iD:
             msg = vehicles[i].halowMsg
-            while msg==None or msg=="POS":
+            while msg is None or msg == "POS":
                 time.sleep(0.1)
                 msg = vehicles[i].halowMsg
-            print("msg from "+str(i)+" is : "+str(msg))
+            print("msg from " + str(i) + " is : " + str(msg))
             tmp = msg.split(":")
             if tmp[0] == "POS":
                 sPart = tmp[1]
                 tmp = sPart.split(";")
                 pos[i] = float(tmp[0]), float(tmp[1])
     return pos
-                    
-                    
+
 
 def sendAllExceptOneHalow(msg, excepted):
     '''
@@ -237,19 +271,19 @@ def sendAllExceptOneHalow(msg, excepted):
                 excepted : id of the drone excepted
     '''
     global vehicles
-    print("sending : "+msg+" to all drones excepted : "+str(excepted))
-    for i in range(1, len(vehicles)+1):
+    print("sending : " + msg + " to all drones excepted : " + str(excepted))
+    for i in range(1, len(vehicles) + 1):
         if i != excepted:
             sendHalowMsg(i, msg)
 
-                
+
 def sendHalowMsg(iD, msg):
     '''
         Method to send halow message to one drone
 
         Params:
                 iD : ID of the drone that we want to send the message
-                msg : message to send to the drone 
+                msg : message to send to the drone
     '''
     global vehicles, lastSendHalow
     lastSendHalow[iD] = msg
@@ -269,7 +303,6 @@ def resetHalowMsg(iD):
     vehicles[iD].isNewHalowMsg = False
 
 
-
 def genPoint(lat1, lon1, alt1, lat2, lon2, alt2, dist):
     '''
         Method to generate points on a line separed by a certain distance
@@ -281,23 +314,24 @@ def genPoint(lat1, lon1, alt1, lat2, lon2, alt2, dist):
             lat2 : latitude of point 2
             lon2 : longitude of point 2
             alt2 : altitude of point 2
-            dist : distance between generated points 
-    '''      
-    a = (lon1-lon2)/(lat1-lat2)
+            dist : distance between generated points
+    '''
+    a = (lon1 - lon2) / (lat1 - lat2)
     b = lon1 - a * lat1
     x, y, l1, l2 = 0, 0, 0, 0
-    if lat1<lat2:
+    if lat1 < lat2:
         l1 = lat1
         l2 = lat2
-    else :
+    else:
         l1 = lat2
         l2 = lat1
     for x in np.linspace(l1, l2, 100000):
-        y = a*x+b
+        y = a * x + b
         d = distance(lat1, lon1, x, y)
-        if dist*0.999<d<dist:
+        if dist * 0.999 < d < dist:
             return x, y
     return None, None
+
 
 def distance(lat1, lon1, lat2, lon2):
     """
@@ -309,7 +343,7 @@ def distance(lat1, lon1, lat2, lon2):
     """
     dlat = lat2 - lat1
     dlong = lon2 - lon1
-    return math.sqrt((dlat*dlat) + (dlong*dlong)) * 1.113195e5
+    return math.sqrt((dlat * dlat) + (dlong * dlong)) * 1.113195e5
 
 
 def genPointsArray(lat1, lon1, alt1, lat2, lon2, alt2, dist=100):
@@ -331,22 +365,22 @@ def genPointsArray(lat1, lon1, alt1, lat2, lon2, alt2, dist=100):
     begin = time.time()
     i = 0
     ui = {}
-    newX,newY = genPoint(lat1, lon1, alt1, lat2, lon2, alt2, dist)
-    ui[i] = newX,newY
-    i+=1
-    while lat1>newX>lat2:
-        x,y = genPoint(newX, newY, alt1, lat2, lon2, alt2, dist)
-        if newX == x or x==None:
+    newX, newY = genPoint(lat1, lon1, alt1, lat2, lon2, alt2, dist)
+    ui[i] = newX, newY
+    i += 1
+    while lat1 > newX > lat2:
+        x, y = genPoint(newX, newY, alt1, lat2, lon2, alt2, dist)
+        if newX == x or x is None:
             break
         else:
             print("else")
-            ui[i] = x,y
-            i+=1
+            ui[i] = x, y
+            i += 1
             newX = x
             newY = y
-    print("took : "+str(time.time()-begin))
+    print("took : " + str(time.time() - begin))
     return ui
-    
+
 
 def writePOIFile(poi):
     '''
@@ -355,14 +389,17 @@ def writePOIFile(poi):
         Params:
             newAdd : Address to add to connectionList.txt
     '''
-    f = open("/mnt/hgfs/Connect/POI.txt", "a") # Path to the shared directory, depend on the configuration of your VM
+    f = open(
+        "/mnt/hgfs/Connect/POI.txt",
+        "a")  # Path to the shared directory, depend on the configuration of your VM
     for i in range(0, len(poi)):
-        line = str(poi[i][0])+"\t"+str(poi[i][1])+"\t"+str(i)+"\n"
+        line = str(poi[i][0]) + "\t" + str(poi[i][1]) + "\t" + str(i) + "\n"
         print(line)
         f.write(line)
     f.close()
 
-#--home=.362149
+
+# --home=.362149
 lat1 = -35.363261
 lon1 = 149.165230
 alt1 = 584
@@ -371,76 +408,58 @@ lon2 = 149.165220
 alt2 = 584
 
 
-
 def main():
-    global numberOfDetectedPoints, vehicles, continu, gcsLat, gcsLon, gcsAlt
+    global numberOfDetectedPoints, vehicles, continu, gcsLat, gcsLon, gcsAlt, isHalow
 
-    # Barcelona airport : 41.3061778,2.1050781,0.162556,353  -- didn't found how to get the fourth parameter for now
-    home = [41.3061778,2.1050781,0.162556,353]
-    # if a connection file exist, we delete it -> when drones instances are created, they create the file and implement it
-    if os.path.exists("/mnt/hgfs/Connect/connectionList.txt"): # Path to the shared directory, depend on the configuration of your VM
-        os.remove("/mnt/hgfs/Connect/connectionList.txt") # Path to the shared directory, depend on the configuration of your VM
-    if os.path.exists("/mnt/hgfs/Connect/POI.txt"): # Path to the shared directory, depend on the configuration of your VM
-        os.remove("/mnt/hgfs/Connect/POI.txt") # Path to the shared directory, depend on the configuration of your VM
+    # Barcelona airport : 41.3061778,2.1050781,0.162556,353  -- didn't found
+    # how to get the fourth parameter for now
+    home = [41.3061778, 2.1050781, 0.162556, 353]
+    # if a connection file exist, we delete it -> when drones instances are
+    # created, they create the file and implement it
+    # Path to the shared directory, depend on the configuration of your VM
+    if os.path.exists("/mnt/hgfs/Connect/connectionList.txt"):
+        # Path to the shared directory, depend on the configuration of your VM
+        os.remove("/mnt/hgfs/Connect/connectionList.txt")
+    # Path to the shared directory, depend on the configuration of your VM
+    if os.path.exists("/mnt/hgfs/Connect/POI.txt"):
+        # Path to the shared directory, depend on the configuration of your VM
+        os.remove("/mnt/hgfs/Connect/POI.txt")
 
     # create new set of interest points
-    #rpg = RandomPointGenerator(-35.3634182, -35.3621443, 149.1651605, 149.1651776) # Have to set (min & max) latitude and longitude
-    #lIP = rpg.getMultiplePoints(10) # Get random points of interest
+    # rpg = RandomPointGenerator(-35.3634182, -35.3621443, 149.1651605, 149.1651776) # Have to set (min & max) latitude and longitude
+    # lIP = rpg.getMultiplePoints(10) # Get random points of interest
     lIP = [[-35.36215420, 149.16508380]]
     numberOfDetectedPoints = len(lIP)
 
     # Write the interest points in a file
     writePOIFile(lIP)
-    
 
     # Create drones instances
-    for i in range(1, 4):
-        #vehicles[i] = Vehicle(i, lIP)
-        # vehicles[i] = Vehicle(i, lIP, home)
-        # vehicles[i].isHalow = True  # the drone have Wifi halow
-        #vehicles[i] = Vehicle(i, lIP, True) # for debug purposes
-        #if i ==1:
-        vehicles[i] = Vehicle({"nInstance":i, "lIP":lIP, "logging":True})
-        #else:
-        #    vehicles[i] = Vehicle({"nInstance":i, "lIP":lIP, "logging":False}) 
-        vehicles[i].isHalow = False # setted to true if the drone have an Halow interface, False otherwise
+    for i in range(1, numberOfDronesInstances + 1):
+        vehicles[i] = Vehicle(
+            {"nInstance": i, "lIP": lIP, "logging": True, "isHalow": isHalow})
         print("instance " + str(i) + " created")
 
-    # Launch GCS halow messages handler 
+    # Launch GCS halow messages handler
     tHalow = Thread(target=handleHalowMsg, args=())
     tHalow.start()
     # Launch GCS wifi messages handler
     tWifi = Thread(target=handleWifiMsg, args=())
     tWifi.start()
-    
+
     # Initiate the collision handler
     ch = CollisionHandler(vehicles)
     ch.start()
 
-    
-
-
     # set and start missions
     for v in vehicles:
-        vehicles[v].setWayPointsFromFile("/mnt/hgfs/Connect/v"+str(v)+".waypoints") # Path to the shared directory, depend on the configuration of your VM
+        # Path to the shared directory, depend on the configuration of your VM
+        vehicles[v].setWayPointsFromFile(
+            "/mnt/hgfs/Connect/v" + str(v) + ".waypoints")
         vehicles[v].startMission()
 
 
-        
-    # TEST
-    
-    # close
-    #for v in vehicles:
-    #   vehicles[v].close()
-    #vehicles[0].closeWin()
-    #exit()
-
-
-
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
 
 # usefull inf : path to share folder : /mnt/hgfs/Connect/
-
-
-

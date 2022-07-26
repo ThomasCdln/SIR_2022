@@ -12,15 +12,16 @@ import collections
 import numpy as np
 
 ###### GLOBALS ######
-winTerm = 0 # ID of the terminal window where we launch commands
-isTerm = False # Boolean to know if there is an existing terminal window
-lIP = [(0,0)] # list of interest point 
-wifiCom = {} # # embended dictionnary that contains messages send by wifi, first key : instance number of the sender, second key : instance number of the receiver 
-dronesPos = {} # contain current drones instances positions | key : instance number
-gcsLat = 0 # latitude of the GCS - setted at the takeoff point of the drone
-gcsLon = 0 # longitude of the GCS - setted at the takeoff point of the drone
-gcsAlt = 0 # altitude of the GCS - setted at the takeoff point of the drone
+winTerm = 0  # ID of the terminal window where we launch commands
+isTerm = False  # Boolean to know if there is an existing terminal window
+lIP = [(0, 0)]  # list of interest point
+wifiCom = {}  # embended dictionnary that contains messages send by wifi, first key : instance number of the sender, second key : instance number of the receiver
+dronesPos = {}  # contain current drones instances positions | key : instance number
+gcsLat = 0  # latitude of the GCS - setted at the takeoff point of the drone
+gcsLon = 0  # longitude of the GCS - setted at the takeoff point of the drone
+gcsAlt = 0  # altitude of the GCS - setted at the takeoff point of the drone
 ###### GLOBALS ######
+
 
 def getGcsPos():
     """
@@ -52,14 +53,14 @@ def listToString(listed, separator=None):
             listed : the list that have to be transformed
             space : boolean wich specify if spaces have to be added between list elements
 
-        return : a string containing all the elements of listed 
+        return : a string containing all the elements of listed
     '''
     string = ""
     for s in listed:
-        string+= str(s)
-        if separator != None :
-            string+= separator
-    if separator == None:
+        string += str(s)
+        if separator is not None:
+            string += separator
+    if separator is None:
         string += " "
     return string[:-1]
 
@@ -75,21 +76,21 @@ def genPoint(lat1, lon1, alt1, lat2, lon2, alt2, dist):
             lat2 : latitude of point 2
             lon2 : longitude of point 2
             alt2 : altitude of point 2
-            dist : distance between generated points 
+            dist : distance between generated points
     '''
-    a = (lon1-lon2)/(lat1-lat2)
+    a = (lon1 - lon2) / (lat1 - lat2)
     b = lon1 - a * lat1
     x, y, l1, l2 = 0, 0, 0, 0
-    if lat1<lat2:
+    if lat1 < lat2:
         l1 = lat1
         l2 = lat2
-    else :
+    else:
         l1 = lat2
         l2 = lat1
     for x in np.linspace(l1, l2, 100000):
-        y = a*x+b
+        y = a * x + b
         d = get_distance_metres(lat1, lon1, x, y)
-        if dist*0.999<d<dist:
+        if dist * 0.999 < d < dist:
             return x, y
     return None, None
 
@@ -112,16 +113,16 @@ def genPointsArray(lat1, lon1, alt1, lat2, lon2, alt2, dist=100):
     begin = time.time()
     i = 0
     ui = {}
-    newX,newY = genPoint(lat1, lon1, alt1, lat2, lon2, alt2, dist)
-    ui[i] = newX,newY
-    i+=1
-    while lat1>newX>lat2:
-        x,y = genPoint(newX, newY, alt1, lat2, lon2, alt2, dist)
-        if newX == x or x==None:
+    newX, newY = genPoint(lat1, lon1, alt1, lat2, lon2, alt2, dist)
+    ui[i] = newX, newY
+    i += 1
+    while lat1 > newX > lat2:
+        x, y = genPoint(newX, newY, alt1, lat2, lon2, alt2, dist)
+        if newX == x or x is None:
             break
         else:
-            ui[i] = x,y
-            i+=1
+            ui[i] = x, y
+            i += 1
             newX = x
             newY = y
     return ui
@@ -141,19 +142,19 @@ def distance(lat1, lon1, alt1, lat2, lon2, alt2):
 
             return : distance in meters
     '''
-    if alt1 == None:
+    if alt1 is None:
         alt1 = 0
-    if alt2 == None:
+    if alt2 is None:
         alt2 = 0
-    diffLat = abs(lat1-lat2)
-    diffLon = 6731000*abs(lon1-lon2)
-    avgAlt = (alt1+alt2)/2
-    distLat = avgAlt*(pi/180)*diffLat
-    distLon = avgAlt*(pi/180)*diffLon
-    distAlt = abs(alt1-alt2)
-    return sqrt(distAlt*distAlt + distLat*distLat + distLon*distLon)
+    diffLat = abs(lat1 - lat2)
+    diffLon = 6731000 * abs(lon1 - lon2)
+    avgAlt = (alt1 + alt2) / 2
+    distLat = avgAlt * (pi / 180) * diffLat
+    distLon = avgAlt * (pi / 180) * diffLon
+    distAlt = abs(alt1 - alt2)
+    return sqrt(distAlt * distAlt + distLat * distLat + distLon * distLon)
 
-    
+
 def newTerminal():
     '''
         Method wich create a new terminal window and get it's ID
@@ -164,25 +165,31 @@ def newTerminal():
     winTerm = subprocess.check_output("xdotool getactivewindow", shell=True)
     winTerm = winTerm.replace("\n", "")
     isTerm = True
-    
+
 
 def runInTerminal(s):
     '''
         Method wich launch terminal commands such as the dronekit-sitl instance
 
         Params :
-            s : the command to run as a list 
+            s : the command to run as a list
     '''
     global winTerm, isTerm
-    if not isTerm :
+    if not isTerm:
         newTerminal()
     else:
-        os.system("xdotool windowactivate %s"%str(winTerm))
+        os.system("xdotool windowactivate %s" % str(winTerm))
         os.system("xdotool key ctrl+Shift_L+t")
-    os.system("xdotool type --window "+ winTerm + " '%s'"%listToString(s, " "))
+    os.system(
+        "xdotool type --window " +
+        winTerm +
+        " '%s'" %
+        listToString(
+            s,
+            " "))
     os.system("xdotool key --window " + winTerm + " Return")
-    os.system("xdotool windowminimize --sync "+ winTerm)    
-    
+    os.system("xdotool windowminimize --sync " + winTerm)
+
 
 def genMavProxyCmd(instance):
     '''
@@ -192,14 +199,22 @@ def genMavProxyCmd(instance):
             intance : current dronekit-sitl instance number
             return : String with the IP address and port for connecting the GCS
     '''
-    launchMavproxy = ["mavproxy.py", "--master", "tcp:127.0.0.1:5770", "--out", "udp:127.0.0.1:14551", "--out", "udp:10.0.2.2:14552"]
+    launchMavproxy = [
+        "mavproxy.py",
+        "--master",
+        "tcp:127.0.0.1:5770",
+        "--out",
+        "udp:127.0.0.1:14551",
+        "--out",
+        "udp:10.0.2.2:14552"]
     tcpDrone = ["tcp:", "127.0.0.1", ":", "5770"]
-    outGCS = ["udp:", "192.168.235.1", ":", "14551"] # change here the ip address to the router address
+    # change here the ip address to the router address
+    outGCS = ["udp:", "192.168.235.1", ":", "14551"]
     outCmd = ["udp:", "127.0.0.1", ":", "14552"]
-    GCS = ["udp:","192.168.235.128:", ""]
-    pTcp = 5760 + 10*instance
-    pOutGCS = 14550 + (instance*2-1)
-    pOutCmd = 14550 + (instance*2)
+    GCS = ["udp:", "192.168.235.128:", ""]
+    pTcp = 5760 + 10 * instance
+    pOutGCS = 14550 + (instance * 2 - 1)
+    pOutCmd = 14550 + (instance * 2)
     tcpDrone[3] = str(pTcp)
     outGCS[3] = str(pOutGCS)
     outCmd[3] = str(pOutCmd)
@@ -212,7 +227,7 @@ def genMavProxyCmd(instance):
     return outCmd
 
 
-def launchDroneKit(instance, startPoint = None):
+def launchDroneKit(instance, startPoint=None):
     '''
         Method to start the drone kit siltl instance in a terminal
 
@@ -221,12 +236,18 @@ def launchDroneKit(instance, startPoint = None):
             startPoint)  :
     '''
     launchDronekit = []
-    if startPoint == None :
-        launchDronekit = ["dronekit-sitl", "copter-3.3", "--instance", "instanceNumber"]
+    if startPoint is None:
+        launchDronekit = [
+            "dronekit-sitl",
+            "copter-3.3",
+            "--instance",
+            "instanceNumber"]
     else:
         # --home=-35.363261,149.165230,584,353
-        # Barcelona airport : 41.3061778,2.1050781,0.162556,353  -- didn't found how to get the fourth parameter for now
-        launchDronekit = ["dronekit-sitl", "copter-3.3", "--instance", "instanceNumber", "--home="+ str(startPoint[0])+","+str(startPoint[1])+","+ str(startPoint[2])+","+ str(startPoint[3])]
+        # Barcelona airport : 41.3061778,2.1050781,0.162556,353  -- didn't
+        # found how to get the fourth parameter for now
+        launchDronekit = ["dronekit-sitl", "copter-3.3", "--instance", "instanceNumber", "--home=" + str(
+            startPoint[0]) + "," + str(startPoint[1]) + "," + str(startPoint[2]) + "," + str(startPoint[3])]
     launchDronekit[3] = str(instance)
     runInTerminal(launchDronekit)
 
@@ -238,9 +259,10 @@ def writeConnectionFile(newAdd):
         Params:
             newAdd : Address to add to connectionList.txt
     '''
-    if newAdd[0]=="udp:":
-        newAdd[0]="udp://"
-    f = open("/mnt/hgfs/Connect/connectionList.txt", "a") # Path to the shared directory, depend on the configuration of your VM
+    if newAdd[0] == "udp:":
+        newAdd[0] = "udp://"
+    # Path to the shared directory, depend on the configuration of your VM
+    f = open("/mnt/hgfs/Connect/connectionList.txt", "a")
     f.write(listToString(newAdd, None) + "\n")
     f.close()
 
@@ -256,32 +278,33 @@ def MPTFFtoDictio(FileName):
     altAboveSea = 0
     with open(FileName) as f:
         for i, line in enumerate(f):
-            if i==0:
+            if i == 0:
                 pass
-            elif i==1:
-                linearray=line.split('\t')
+            elif i == 1:
+                linearray = line.split('\t')
                 altAboveSea = float(linearray[10])
             else:
-                linearray=line.split('\t')
-		ln_index=int(linearray[0])
-		ln_X=float(linearray[8])
-		ln_Y=float(linearray[9])
-		ln_Z=(float(linearray[10]) + altAboveSea)
-		dico[ln_index] = [ln_X, ln_Y, ln_Z]
+                linearray = line.split('\t')
+                ln_index = int(linearray[0])
+                ln_X = float(linearray[8])
+                ln_Y = float(linearray[9])
+                ln_Z = (float(linearray[10]) + altAboveSea)
+                dico[ln_index] = [ln_X, ln_Y, ln_Z]
         return dico
-    
 
-def insertOrReplace (minHeap, element, weight) :
-    
+
+def insertOrReplace(minHeap, element, weight):
+
     # Insert if does not exist
-    if element not in [x[1] for x in minHeap] :
+    if element not in [x[1] for x in minHeap]:
         heapq.heappush(minHeap, (weight, element))
-    
+
     # Replace otherwise
-    else :
+    else:
         indexToUpdate = [x[1] for x in minHeap].index(element)
         minHeap[indexToUpdate] = (weight, element)
         heapq.heapify(minHeap)
+
 
 def defineRoad(sender, receiver, listOfPredecessors):
     '''
@@ -292,7 +315,13 @@ def defineRoad(sender, receiver, listOfPredecessors):
                 receiver : id of the receiving drone
                 listOfPredecessors : current list of predecessors
     '''
-    print("define a road from : "+str(sender)+" to : "+str(receiver)+" using this list : "+str(listOfPredecessors))
+    print(
+        "define a road from : " +
+        str(sender) +
+        " to : " +
+        str(receiver) +
+        " using this list : " +
+        str(listOfPredecessors))
     listOfIds = [str(receiver)]
     tempiD = str(receiver)
     if int(receiver) in listOfPredecessors[int(sender)]:
@@ -304,17 +333,14 @@ def defineRoad(sender, receiver, listOfPredecessors):
                     listOfIds.append(iD)
                     tempiD = iD
                     break
-    print("defined road : "+str(listOfIds[::-1]))
-    return listOfIds[::-1] 
+    print("defined road : " + str(listOfIds[::-1]))
+    return listOfIds[::-1]
 
 
 ###################################################################
 class Vehicle():
-    
 
-    
-
-    # Possible arguments : 
+    # Possible arguments :
     def __init__(self, args):
         '''
             Method called when we create a new instance of the class
@@ -333,72 +359,86 @@ class Vehicle():
         self.stopPos = []            # Coordinates where the drone stopped
         self.wayPoints = {}          # index : [lat, lon, alt]
         # Flags
-        self.isStop = False          # set to false to stop allow to stop command control and being able to send another
-        self.isOnMission = False     # setted to true when we ask the drone to pause it's current mission and go to a position
-        self.isNewHalowMsg = False   # Boolean value setted to True if there is a new halow message to read
+        # set to false to stop allow to stop command control and being able to
+        # send another
+        self.isStop = False
+        # setted to true when we ask the drone to pause it's current mission
+        # and go to a position
+        self.isOnMission = False
+        # Boolean value setted to True if there is a new halow message to read
+        self.isNewHalowMsg = False
         self.isHalow = False         # True if Halow-WiFi can be used on this drone instance
         self.isHandleWifi = True
         self.logging = False         # Set it to True if you want to have all the logs
         self.running = True          # True if the instance still running, else false
         # Messages
-        self.halowMsg = None         # msg from the Wifi-Halow 
+        self.halowMsg = None         # msg from the Wifi-Halow
         self.wifiMsgGcs = None       # wifiMsgToGCS
         self.wifiFromGcs = None      # wifiMsgFromGCS
-        self.wifiMsgOld = {}         # dictionnarie containning the last received wifi msg from other drones
-        self.msgRoads = {}           # dictionnarie containning the roads to communicate with each drone
+        # dictionnarie containning the last received wifi msg from other drones
+        self.wifiMsgOld = {}
+        # dictionnarie containning the roads to communicate with each drone
+        self.msgRoads = {}
         # Threads
         self.tMission = None         # thread to manage missions
         self.tAat = Thread()             # thread to manage arm and takeoff
         self.tIpD = None             # thread to discover points of interest
-        ####### End of declarations
+        # End of declarations
         self.nInstance = args["nInstance"] if "nInstance" in args else None
-        lIP = args["lIP"] if "lIP" in args else [(0,0)]
+        lIP = args["lIP"] if "lIP" in args else [(0, 0)]
         startPoint = args["home"] if "home" in args else None
         self.logging = args["logging"] if "logging" in args else False
         tkOffAlt = args["takeoffAltitude"] if "takeoffAltitude" in args else 20
-        if type(self.nInstance)!=int : raise Exception()
+        self.isHalow = args["isHalow"] if "isHalow" in args else False
+        if not isinstance(self.nInstance, int):
+            raise Exception()
         # trying to hide the logs from dronekit but seems not working
         if not self.logging:
             logging.getLogger('dronekit').addHandler(logging.NullHandler())
             logging.getLogger('autopilot').addHandler(logging.NullHandler())
-        if self.logging : print("init vehicle number : " + str(self.nInstance))
+        if self.logging:
+            print("init vehicle number : " + str(self.nInstance))
         # we launch dronekit-sitl
         launchDroneKit(self.nInstance, startPoint)
-        # we launch mavproxy and get the connexion address 
+        # we launch mavproxy and get the connexion address
         self.connectionAddr = genMavProxyCmd(self.nInstance)
         # we create a vehicle instance using the connexion address we just got
-        self.tDroneInstance = Thread(target=self.droneInstance, args=(self.connectionAddr,))
+        self.tDroneInstance = Thread(
+            target=self.droneInstance, args=(
+                self.connectionAddr,))
         self.tDroneInstance.start()
         # we launch the thread to handle wifi communication
         self.tHndlW = Thread(target=self.handleReceiveWifi)
         self.tHndlW.start()
-        # if the drone has an halow interface, we launch the thread to handle halow communication
+        # if the drone has an halow interface, we launch the thread to handle
+        # halow communication
         if self.isHalow:
             self.tHndlH = Thread(target=self.handleReceiveHalow)
             self.tHndlH.start()
         # we create the thread that will handle the mission
         self.tMission = Thread(target=self.handleWayPoints, args=())
         # Needed because it's a threaded class
-        # We launch the thread that will handle the discovering of points of interest
+        # We launch the thread that will handle the discovering of points of
+        # interest
         self.tIpD = Thread(target=self.iPDiscovering)
         self.tIpD.start()
         # We launch the thread to handle arm and takeoff of the drone
         self.tAat = Thread(target=self.aat, args=(tkOffAlt,))
         self.tAat.start()
-        if self.logging : print("End of initialisation of vehicle class instance "+ str(self.nInstance))
+        if self.logging:
+            print("End of initialisation of vehicle class instance " +
+                  str(self.nInstance))
 
-
-    
     def droneInstance(self, connectAdd):
         '''
             Initiate the dronekit connection with the simulated drone
 
             Params:
-                connectAdd : the connection IP and port as a List 
+                connectAdd : the connection IP and port as a List
         '''
         global gcsLat, gcsLon, gcsAlt
-        connectAdd[0]="udpin:"
-        connectAdd[1]="0.0.0.0"
+        connectAdd[0] = "udpin:"
+        connectAdd[1] = "0.0.0.0"
         connectString = listToString(connectAdd, None)
         self.vehicle = connect(connectString, wait_ready=True)
         self.takeOffLat = self.vehicle.location.global_frame.lat
@@ -409,17 +449,13 @@ class Vehicle():
         gcsAlt = self.takeOffAlt
         self.cmdToDrone = self.vehicle.commands
 
+    #################################### Setters & Getters ###################
 
-
-
-
-    #################################### Setters & Getters ####################################
     def getPos(self):
         '''
             Getter for the localisation of the vehicle
         '''
         return self.curLat, self.curLon, self.curAlt
-    
 
     def getVehicle(self):
         '''
@@ -428,14 +464,12 @@ class Vehicle():
         self.tDroneInstance.join()
         return self.vehicle
 
-
     def setInterestPoint(self, listIP):
         '''
             Setter for the Interest Point list
         '''
         global lIP
         lIP = listIP
-
 
     def setWayPointsFromFile(self, filePath):
         '''
@@ -446,7 +480,6 @@ class Vehicle():
         '''
         self.wayPoints = MPTFFtoDictio(filePath)
 
-
     def setWayPoints(self, wayPoints):
         '''
             Method to set waypoints
@@ -456,13 +489,13 @@ class Vehicle():
         '''
         self.wayPoints = wayPoints
 
-
     def iPDiscovering(self):
         '''
             Method wich will be run when we start the threaded class
         '''
         global dronesPos, lIP
-        if self.logging : print("run thread of instance " + str(self.nInstance))
+        if self.logging:
+            print("run thread of instance " + str(self.nInstance))
         # checking if vehicle is well connected
         self.tDroneInstance.join()
         # checking if vehicle had takeoff
@@ -473,38 +506,43 @@ class Vehicle():
             self.curAlt = self.vehicle.location.global_frame.alt
             dronesPos[self.nInstance] = [self.curLat, self.curLon, self.curAlt]
             for p in lIP:
-                if (get_distance_metres(p[0], p[1], self.curLat, self.curLon)< 2) and self.isOnMission:
-                    print("Point detected by drone "+str(self.nInstance))
-                    dist = get_distance_metres(self.curLat, self.curLon, self.takeOffLat, self.takeOffLon)
-                    if self.logging : print("distance between GCS and IP : "+str(dist))
+                if (get_distance_metres(
+                        p[0], p[1], self.curLat, self.curLon) < 2) and self.isOnMission:
+                    print("Point detected by drone " + str(self.nInstance))
+                    dist = get_distance_metres(
+                        self.curLat, self.curLon, self.takeOffLat, self.takeOffLon)
+                    if self.logging:
+                        print("distance between GCS and IP : " + str(dist))
                     self.handleIP()
                     lIP.remove(p)
             time.sleep(0.5)
 
-
     def handleIP(self):
-        ''' 
+        '''
             Method called when a Interst Point is detected
         '''
-        # First we stop the drone over the interest point      
+        # First we stop the drone over the interest point
         self.stopDrone()
-        # After we check if the GCS is near enought to receive the video of the interest point
-        if get_distance_metres(self.takeOffLat, self.takeOffLon, self.curLat, self.curLon)<100:
-            if self.logging : print("The GCS is near enought to receive directly the video")
-            self.wifiMsgGcs = "video from "+str(self.nInstance)
+        # After we check if the GCS is near enought to receive the video of the
+        # interest point
+        if get_distance_metres(
+                self.takeOffLat, self.takeOffLon, self.curLat, self.curLon) < 100:
+            if self.logging:
+                print("The GCS is near enought to receive directly the video")
+            self.wifiMsgGcs = "video from " + str(self.nInstance)
         else:
             # If the drone have an halow interface
             if self.isHalow:
-                # send a message to GCS to inform it that an interest point is detected
-                if self.logging : print("Inform GCS that there is an interest point") 
+                # send a message to GCS to inform it that an interest point is
+                # detected
+                if self.logging:
+                    print("Inform GCS that there is an interest point")
                 # message structure : 'IP,self.lat; self.lon'
-                self.halowMsg = "IP:"+str(self.curLat)+";"+str(self.curLon)
+                self.halowMsg = "IP:" + \
+                    str(self.curLat) + ";" + str(self.curLon)
             else:
                 # send broadcast wifi message to align all drones to join GCS
                 self.handleIPWifi(self.curLat, self.curLon)
-                
-                
-
 
     def aat(self, aTargetAltitude):
         '''
@@ -515,63 +553,77 @@ class Vehicle():
         '''
         # wainting for connection finished
         self.tDroneInstance.join()
-            
-        if self.logging : print("Basic pre-arm checks")
+
+        if self.logging:
+            print("Basic pre-arm checks")
         # Don't try to arm until autopilot is ready
-        while self.running and not self.vehicle.is_armable :
-            if self.logging : print(" Waiting for vehicle %i to initialise..."%self.nInstance)
+        while self.running and not self.vehicle.is_armable:
+            if self.logging:
+                print(
+                    " Waiting for vehicle %i to initialise..." %
+                    self.nInstance)
             time.sleep(1)
 
-        if self.logging : print("Arming motors")
+        if self.logging:
+            print("Arming motors")
         # Copter should arm in GUIDED mode
-        self.vehicle.mode    = VehicleMode("GUIDED")
-        self.vehicle.armed   = True
+        self.vehicle.mode = VehicleMode("GUIDED")
+        self.vehicle.armed = True
 
         # Confirm vehicle armed before attempting to take off
         while self.running and not self.vehicle.armed:
-            if self.logging : print(" Waiting for arming...")
+            if self.logging:
+                print(" Waiting for arming...")
             time.sleep(1)
-            self.vehicle.mode    = VehicleMode("GUIDED")
-            self.vehicle.armed   = True
+            self.vehicle.mode = VehicleMode("GUIDED")
+            self.vehicle.armed = True
 
-        if self.logging : print("Taking off!")
-        self.vehicle.simple_takeoff(aTargetAltitude) # Take off to target altitude
+        if self.logging:
+            print("Taking off!")
+        # Take off to target altitude
+        self.vehicle.simple_takeoff(aTargetAltitude)
 
         # Wait until the vehicle reaches a safe height before processing the goto (otherwise the command
         #  after Vehicle.simple_takeoff will execute immediately).
-        while self.running and not (self.vehicle.location.global_relative_frame.alt>=aTargetAltitude*0.95):
-            if self.logging : print(" Altitude: ", self.vehicle.location.global_relative_frame.alt)
+        while self.running and not (
+                self.vehicle.location.global_relative_frame.alt >= aTargetAltitude * 0.95):
+            if self.logging:
+                print(
+                    " Altitude: ",
+                    self.vehicle.location.global_relative_frame.alt)
             time.sleep(1)
-        if self.logging : print("Reached target altitude")
-
+        if self.logging:
+            print("Reached target altitude")
 
     def getDistanceBtwId(self, id1, id2):
         global dronesPos
-        return get_distance_metres(dronesPos[int(id1)][0], dronesPos[int(id1)][1], dronesPos[int(id2)][0], dronesPos[int(id2)][1])
+        return get_distance_metres(dronesPos[int(id1)][0], dronesPos[int(
+            id1)][1], dronesPos[int(id2)][0], dronesPos[int(id2)][1])
 
-
-
-    #################################### WIFI COM ####################################
-    # Scheme : we first establish the mapping of the network, then we can send to anyone using it (prevent broadcast wich is a pain in the ass)
+    #################################### WIFI COM ############################
+    # Scheme : we first establish the mapping of the network, then we can send
+    # to anyone using it (prevent broadcast wich is a pain in the ass)
 
     def sendWifi(self, iD, msg):
         '''
-            Method to send a wifi msg to a drone iD 
+            Method to send a wifi msg to a drone iD
 
             Params:
                     msg : message to send
         '''
         global wifiCom, dronesPos
         if self.msgRoads != {}:
-            if len(self.msgRoads[int(iD)])<2:
-                msg = msg + ":"+str(self.msgRoads[int(iD)][0])+";"+str(iD)
+            if len(self.msgRoads[int(iD)]) < 2:
+                msg = msg + ":" + \
+                    str(self.msgRoads[int(iD)][0]) + ";" + str(iD)
             else:
-                msg = msg + ":"+listToString(self.msgRoads[int(iD)], ";")+";"+str(iD)
+                msg = msg + ":" + \
+                    listToString(self.msgRoads[int(iD)], ";") + ";" + str(iD)
                 iD = self.msgRoads[int(iD)][1]
-            
+
         # If the specified ID is 0, it means that it's a message for the GCS
         if int(iD) == 0:
-            print(str(self.nInstance)+" send msg to GCS : "+str(msg))
+            print(str(self.nInstance) + " send msg to GCS : " + str(msg))
             self.wifiMsgGcs = msg
         # If it's not a message for the GCS
         else:
@@ -579,16 +631,19 @@ class Vehicle():
             dicMsg = {}
             if not str(self.nInstance) in wifiCom.keys():
                 wifiCom[str(self.nInstance)] = {}
-            # If the drone is under 100m away 
+            # If the drone is under 100m away
             if (self.getDistanceBtwId(int(iD), int(self.nInstance)) < 100):
-                if (wifiCom.get(str(self.nInstance)) != None) and (wifiCom[str(self.nInstance)].get(str(iD)) != None) and (wifiCom[str(self.nInstance)][str(iD)] != "None"):
-                    wifiCom[str(self.nInstance)][str(iD)] += "|"+msg
+                if (wifiCom.get(str(self.nInstance)) is not None) and (wifiCom[str(self.nInstance)].get(
+                        str(iD)) is not None) and (wifiCom[str(self.nInstance)][str(iD)] != "None"):
+                    wifiCom[str(self.nInstance)][str(iD)] += "|" + msg
                 else:
                     wifiCom[str(self.nInstance)][str(iD)] = msg
-                if self.logging : print("drone "+str(self.nInstance) +" directly send : " + msg)
+                if self.logging:
+                    print("drone " + str(self.nInstance) +
+                          " directly send : " + msg)
             else:
-                if self.logging : print("drone "+str(iD)+" is too far ")
-
+                if self.logging:
+                    print("drone " + str(iD) + " is too far ")
 
     def getWifiMsg(self):
         '''
@@ -596,12 +651,15 @@ class Vehicle():
         '''
         self.tDroneInstance.join()
         self.tAat.join()
-        dist = get_distance_metres(self.takeOffLat, self.takeOffLon, self.curLat, self.curLon)
-        if dist<100:
+        dist = get_distance_metres(
+            self.takeOffLat,
+            self.takeOffLon,
+            self.curLat,
+            self.curLon)
+        if dist < 100:
             return self.wifiMsgGcs
         else:
             return None
-
 
     def handleReceiveWifi(self):
         '''
@@ -613,12 +671,13 @@ class Vehicle():
         while self.running:
             if self.isHandleWifi:
                 # check for message from GCS
-                if self.wifiFromGcs != oldGcsVal and self.wifiFromGcs != None:
+                if self.wifiFromGcs != oldGcsVal and self.wifiFromGcs is not None:
                     oldGcsVal = self.wifiFromGcs
                     self.handleWifiCommand(str(self.wifiFromGcs))
                     if self.isHalow:
                         if self.wifiFromGcs == "VID:OK":
-                            # The GCS inform the drone that it can start again its mission
+                            # The GCS inform the drone that it can start again
+                            # its mission
                             self.startMission()
                     self.wifiFromGcs = None
                 # check for message from other drones
@@ -626,9 +685,6 @@ class Vehicle():
                 for msg in msgs:
                     self.handleWifiCommand(msg)
             time.sleep(0.1)
-
-
-
 
     def getNewWifiMsg(self):
         '''
@@ -641,15 +697,14 @@ class Vehicle():
         sMsg = []
         for di in wifiCom.keys():
             curDic = wifiCom.get(di)
-            if curDic != None:
+            if curDic is not None:
                 msg = curDic.get(str(self.nInstance))
-                if  (di != str(self.nInstance)) and (msg != None) and (msg != "None") and (self.getDistanceBtwId(di, self.nInstance)<100):
+                if (di != str(self.nInstance)) and (msg is not None) and (
+                        msg != "None") and (self.getDistanceBtwId(di, self.nInstance) < 100):
                     sMsg = msg.split('|')
                     curDic[str(self.nInstance)] = None
                     return sMsg
         return sMsg
-        
-
 
     def handleWifiCommand(self, msg):
         '''
@@ -660,7 +715,9 @@ class Vehicle():
             Params:
                     command : command to handle
         '''
-        if self.logging : print("wifi message to handle by "+str(self.nInstance)+" : " + msg)
+        if self.logging:
+            print("wifi message to handle by " +
+                  str(self.nInstance) + " : " + msg)
         reachables = []
         sMsg = msg.split(":")
         command = sMsg[0]
@@ -668,41 +725,61 @@ class Vehicle():
         plainSendingPath = sMsg[2]
         idSendingPath = plainSendingPath.split(";")
         reverseSendingPath = idSendingPath[::-1]
-        print("reverseSendingPath : "+str(reverseSendingPath))
-        nextIndex = reverseSendingPath.index(str(self.nInstance))+1
+        print("reverseSendingPath : " + str(reverseSendingPath))
+        nextIndex = reverseSendingPath.index(str(self.nInstance)) + 1
         # First we split the message
         sMsg = msg.split(":")
         # check if we have to forward it
-        if idSendingPath[-1] == str(self.nInstance): 
+        if idSendingPath[-1] == str(self.nInstance):
             # we do not forward it
             if sMsg[0] == "map":
                 # the sender ask the near drones
                 # first we stop
                 self.stopDrone()
                 for droneId in dronesPos:
-                    if (droneId != self.nInstance) and (get_distance_metres(dronesPos[droneId][0], dronesPos[droneId][1], self.curLat, self.curLon)<100):
+                    if (droneId != self.nInstance) and (get_distance_metres(
+                            dronesPos[droneId][0], dronesPos[droneId][1], self.curLat, self.curLon) < 100):
                         reachables.append(droneId)
-                self.sendWifi(reverseSendingPath[nextIndex], command+":"+listToString(reachables, ";")+":"+listToString(reverseSendingPath, ";"))
+                self.sendWifi(
+                    reverseSendingPath[nextIndex],
+                    command +
+                    ":" +
+                    listToString(
+                        reachables,
+                        ";") +
+                    ":" +
+                    listToString(
+                        reverseSendingPath,
+                        ";"))
             if sMsg[0] == "start":
                 # The drone is asked to start it's mission
                 self.startMission()
             if sMsg[0] == "align":
                 # The drone is asked to align
                 tempS = parameters.split(";")
-                if self.logging : print("The drone "+str(self.nInstance)+" is asked to align")
+                if self.logging:
+                    print("The drone " +
+                          str(self.nInstance) +
+                          " is asked to align")
                 self.handleAlign(float(tempS[0]), float(tempS[1]))
-                self.sendWifi(reverseSendingPath[nextIndex], "aligned::"+listToString(reverseSendingPath, ";"))
+                self.sendWifi(
+                    reverseSendingPath[nextIndex],
+                    "aligned::" +
+                    listToString(
+                        reverseSendingPath,
+                        ";"))
             if sMsg[0] == "pos":
                 # The drone is asked about its position
                 if parameters == "":
-                    self.sendWifi(reverseSendingPath[nextIndex], command+":"+str(self.curLat)+";"+str(self.curLon)+":"+listToString(reverseSendingPath, ";"))
+                    self.sendWifi(reverseSendingPath[nextIndex], command + ":" + str(
+                        self.curLat) + ";" + str(self.curLon) + ":" + listToString(reverseSendingPath, ";"))
         else:
             # we forward the message
-            if self.logging : print("drone "+str(self.nInstance)+" forward the message : "+msg)
-            nextIndex = idSendingPath.index(str(self.nInstance))+1
+            if self.logging:
+                print("drone " + str(self.nInstance) +
+                      " forward the message : " + msg)
+            nextIndex = idSendingPath.index(str(self.nInstance)) + 1
             self.sendWifi(idSendingPath[nextIndex], msg)
-                
-                
 
     def handleIPWifi(self, ipLat, ipLon):
         '''
@@ -712,11 +789,20 @@ class Vehicle():
                     ipLat : latitude of the point of interest
                     ipLon : longitude of the point of interest
         '''
+        beginTime = time.time()
+        beginBat = self.vehicle.battery.level
+
         nAlign = 0
         # First we ask get the network mapping
         self.getWifiMapping()
         # generate the list of points that have to be used
-        neededPos = genPointsArray(ipLat, ipLon, self.curAlt, self.takeOffLat, self.takeOffLon, self.takeOffAlt)
+        neededPos = genPointsArray(
+            ipLat,
+            ipLon,
+            self.curAlt,
+            self.takeOffLat,
+            self.takeOffLon,
+            self.takeOffAlt)
         # We get all drones positions
         dPos = self.getPosWifi()
         # Then choose wich drone goes where
@@ -726,21 +812,28 @@ class Vehicle():
             tempBestDist = 1000
             for iD in dPos:
                 curPos = dPos[iD]
-                dist = get_distance_metres(neededPos[point][0], neededPos[point][1], curPos[0], curPos[1]) 
+                dist = get_distance_metres(
+                    neededPos[point][0],
+                    neededPos[point][1],
+                    curPos[0],
+                    curPos[1])
                 if dist < tempBestDist and iD not in assignations.keys():
                     tempBestId = iD
                     tempBestDist = dist
-            assignations[tempBestId]=str(neededPos[point][0])+";"+str(neededPos[point][1])
-        if self.logging : print(" points assignations : "+str(assignations))
+            assignations[tempBestId] = str(
+                neededPos[point][0]) + ";" + str(neededPos[point][1])
+        if self.logging:
+            print(" points assignations : " + str(assignations))
         # Now we send the drones to their required positions
         for i in assignations:
-            self.sendWifi(int(i), "align:"+assignations[i])
-            
+            self.sendWifi(int(i), "align:" + assignations[i])
+
         # Check if all drones are aligned
         self.isHandleWifi = False
         print("Stopping the wifi handling thread")
         # We check if they're all aligned
-        if self.logging : print("Check for drones alignement")
+        if self.logging:
+            print("Check for drones alignement")
         while nAlign < len(assignations):
             # check for message from other drones
             msgs = self.getNewWifiMsg()
@@ -748,8 +841,9 @@ class Vehicle():
                 sMsg = msg.split(":")
                 if (sMsg[0] == "aligned"):
                     nAlign += 1
-        # Start the receiving thread        
-        if self.logging : print("All drones are aligned")
+        # Start the receiving thread
+        if self.logging:
+            print("All drones are aligned")
 
         # Send the video to the GCS
         self.msgRoads[0] = [int(self.nInstance)]
@@ -767,12 +861,15 @@ class Vehicle():
 
         # Now we send back the drones used to their initial position
         for drones in assignations.keys():
-            print("Initial position of drone "+str(drones)+" is "+str(dPos[drones]))
-            self.sendWifi(int(drones), "align:"+str(dPos[drones][0])+";"+str(dPos[drones][1]))
+            print("Initial position of drone " +
+                  str(drones) + " is " + str(dPos[drones]))
+            self.sendWifi(int(drones), "align:" +
+                          str(dPos[drones][0]) + ";" + str(dPos[drones][1]))
 
         nAlign = 0
         # We check if they're all aligned
-        if self.logging : print("Check for drones alignement")
+        if self.logging:
+            print("Check for drones alignement")
         while nAlign < len(assignations):
             # check for message from other drones
             msgs = self.getNewWifiMsg()
@@ -780,8 +877,9 @@ class Vehicle():
                 sMsg = msg.split(":")
                 if (sMsg[0] == "aligned"):
                     nAlign += 1
-        # Start the receiving thread        
-        if self.logging : print("All drones are aligned")
+        # Start the receiving thread
+        if self.logging:
+            print("All drones are aligned")
 
         # Then we restart all missions
         for drones in self.msgRoads:
@@ -789,37 +887,46 @@ class Vehicle():
 
         # IP is handle, the drone can continu its mission
         self.startMission()
-            
-            
-
-
 
         # Resetting the map because it's not valid anymore
         self.msgRoads = {}
         # Allow wifi reception again
         self.isHandleWifi = True
 
+        endTime = time.time()
+        endBat = self.vehicle.battery.level
 
+        print("")
+        print(str(self.nInstance) +
+              " Total time for handle the IP without Halow : " +
+              str(endTime -
+                  beginTime))
+        print(str(self.nInstance) +
+              " Total battery consumtion in percentage for handle the IP without Halow : " +
+              str(int(beginBat) -
+                  int(endBat)))
+        print("")
 
     def getPosWifi(self):
         '''
             Method to get the position of all drones by wifi multi hop network
 
             Params:
-                    return : dictionnary of other drones positions 
+                    return : dictionnary of other drones positions
         '''
         nPos = 0
         posDic = {}
         # Stop the receiving thread
         self.isHandleWifi = False
-        print("Stopping the wifi handling thread")
         # We ask for all drones positions by sending a broadcast message
-        if self.logging : print("Drone "+str(self.nInstance)+" ask for all drones position")
-        print("self.msgRoads : "+str(self.msgRoads))
+        if self.logging:
+            print("Drone " + str(self.nInstance) +
+                  " ask for all drones position")
         for i in self.msgRoads:
             self.sendWifi(int(i), "pos:")
-            
-        if self.logging : print("Messages send to all drone to get their positions")  
+
+        if self.logging:
+            print("Messages send to all drone to get their positions")
         # Then we check for answer
         while nPos < len(self.msgRoads):
             # check for message from other drones
@@ -833,12 +940,11 @@ class Vehicle():
                     nPos += 1
         # Start the receiving thread
         self.isHandleWifi = True
-        
-        if self.logging : print("positions : "+str(posDic))
+
+        if self.logging:
+            print("positions : " + str(posDic))
         return posDic
-        
-                
-                
+
     def getWifiMapping(self):
         '''
             Method used to establish the network mapping
@@ -853,16 +959,26 @@ class Vehicle():
         curNetMap[int(self.nInstance)] = []
         # We establish the list of near enought drones
         for droneId in dronesPos:
-            if (droneId != self.nInstance) and (get_distance_metres(dronesPos[droneId][0], dronesPos[droneId][1], self.curLat, self.curLon)<100):
+            if (droneId != self.nInstance) and (get_distance_metres(
+                    dronesPos[droneId][0], dronesPos[droneId][1], self.curLat, self.curLon) < 100):
                 curNetMap[int(self.nInstance)].append(int(droneId))
                 curNetMap[int(droneId)] = [int(self.nInstance)]
                 nearEnoughtDrones.append(int(droneId))
-        if self.logging : print("initial mapping : "+str(curNetMap))
+        if self.logging:
+            print("initial mapping : " + str(curNetMap))
         # Then we get their nearest drones
         for near in curNetMap[int(self.nInstance)]:
-            self.sendWifi(near, "map::"+listToString(defineRoad(self.nInstance,str(near),curNetMap), ";"))
+            self.sendWifi(
+                near,
+                "map::" +
+                listToString(
+                    defineRoad(
+                        self.nInstance,
+                        str(near),
+                        curNetMap),
+                    ";"))
             discoverdDrones.append(str(near))
-        
+
         # Stop the receiving thread
         self.isHandleWifi = False
         # Then start scanning for all drones
@@ -879,45 +995,54 @@ class Vehicle():
                             if iD not in discoverdDrones:
                                 if int(road[0]) not in curNetMap.keys():
                                     curNetMap[int(road[0])] = [int(iD)]
-                                elif int(iD) not in curNetMap[int(road[0])]:                                        
+                                elif int(iD) not in curNetMap[int(road[0])]:
                                     curNetMap[int(road[0])].append(int(iD))
                                 if int(iD) not in curNetMap.keys():
                                     curNetMap[int(iD)] = [int(road[0])]
                                 elif int(road[0]) not in curNetMap[int(iD)]:
                                     curNetMap[int(iD)].append(int(road[0]))
-                                self.sendWifi(int(nearDrone), "map::"+listToString(defineRoad(self.nInstance,str(iD),curNetMap), ";"))
+                                self.sendWifi(
+                                    int(nearDrone),
+                                    "map::" +
+                                    listToString(
+                                        defineRoad(
+                                            self.nInstance,
+                                            str(iD),
+                                            curNetMap),
+                                        ";"))
                                 discoverdDrones.append(iD)
             time.sleep(1)
         # Start the receiving thread
         self.isHandleWifi = True
-        print("dicoverd drones : "+ str(discoverdDrones))
+        print("dicoverd drones : " + str(discoverdDrones))
         # then the mapping should be complete
-        if self.logging : print("complete map : "+ str(curNetMap))
+        if self.logging:
+            print("complete map : " + str(curNetMap))
         # Then we define the roads :
         self.defineOptimizedRoads(curNetMap, discoverdDrones)
 
-         
     def defineOptimizedRoads(self, curNetMap, decoder):
         '''
             Method to find the different roads to communicate with each drone
 
             Params:
         '''
-        # first we gen a matrix data structure and pass it to graph from curNetMap
-        if self.logging : print("defineOptimizedRoads")
+        # first we gen a matrix data structure and pass it to graph from
+        # curNetMap
+        if self.logging:
+            print("defineOptimizedRoads")
         # encode the dictionnary to be used by the algorythm
         tempEncode = {}
         for key, item in curNetMap.items():
-            tempEncode[decoder.index(str(key))]=[]
+            tempEncode[decoder.index(str(key))] = []
             for it in item:
-                tempEncode[decoder.index(str(key))].append(int(decoder.index(str(it))))
-            
+                tempEncode[decoder.index(str(key))].append(
+                    int(decoder.index(str(it))))
+
         curNetMap = tempEncode
-        print("tempEncode : "+str(tempEncode))
-        print("cur net map : "+str(curNetMap))
-        
+
         od = collections.OrderedDict(sorted(curNetMap.items()))
-        
+
         graph = []
         tempGraph = []
         tempTuple = []
@@ -929,58 +1054,54 @@ class Vehicle():
                 del tempTuple[:]
             graph.append(tempGraph[:])
             del tempGraph[:]
-        print("graph : "+str(graph))
-        
+
         sourceNode = decoder.index(str(self.nInstance))
-        
+
         distances = [float("inf") for i in range(len(graph))]
         minHeap = [(0, sourceNode)]
         distances[sourceNode] = 0
-        predecessors = [None for i in range(len(graph))] # <-- new code (we keep track of the predecessors of every node along the shortest paths)
-    
-        # from : 
-        while len(minHeap) != 0 :
+        # <-- new code (we keep track of the predecessors of every node along the shortest paths)
+        predecessors = [None for i in range(len(graph))]
+
+        # from :
+        while len(minHeap) != 0:
             # We extract the closest node from the heap
             (closestNodeDistance, closestNode) = heapq.heappop(minHeap)
             # We update the distance to the neighbors of this node
-            for (neighbor, weight) in graph[closestNode] :
+            for (neighbor, weight) in graph[closestNode]:
                 neighborDistance = closestNodeDistance + weight
-                if neighborDistance < distances[neighbor] :
+                if neighborDistance < distances[neighbor]:
                     insertOrReplace(minHeap, neighbor, neighborDistance)
                     distances[neighbor] = neighborDistance
-                    predecessors[neighbor] = closestNode # <-- new code (we update the predecessor since the path is shorter when going through the closest node)
-        print("")
-        print("predecessors : "+str(predecessors))
+                    # <-- new code (we update the predecessor since the path is shorter when going through the closest node)
+                    predecessors[neighbor] = closestNode
         tempDic = {}
         tempList = []
         for index in range(len(predecessors)):
             tempPred = predecessors[index]
-            if tempPred != None:
+            if tempPred is not None:
                 tempList.append(int(tempPred))
                 tempPred2 = predecessors[int(tempPred)]
-                while tempPred2 != None:
-                    if tempPred2 != None:
+                while tempPred2 is not None:
+                    if tempPred2 is not None:
                         tempList.append(int(tempPred2))
                     tempPred2 = predecessors[int(tempPred2)]
                 tempDic[index] = tempList[::-1]
                 del tempList[:]
         # decode
         tempDecode = {}
-        print("decoder : "+str(decoder))
-        print("temp dic : "+str(tempDic))
         for key, item in tempDic.items():
             tempDecode[int(decoder[int(key)])] = []
             for it in item:
-                tempDecode[int(decoder[int(key)])].append(int(decoder[int(it)]))
-                
+                tempDecode[int(decoder[int(key)])].append(
+                    int(decoder[int(it)]))
+
         self.msgRoads = tempDecode
-        if self.logging : print(self.msgRoads)
+        if self.logging:
+            print(self.msgRoads)
 
-        
+    #################################### HALOW Com ###########################
 
-
-
-    #################################### HALOW Com ####################################
     def handleReceiveHalow(self):
         '''
             Method searching for new halow messages
@@ -993,31 +1114,37 @@ class Vehicle():
                 self.handleHalowMsg(self.halowMsg)
             time.sleep(0.1)
 
-
     def handleHalowMsg(self, msg):
         '''
             Method to react to Halow messages sended to this drone
 
             Params:
-                msg : halow msg send to the drone 
+                msg : halow msg send to the drone
         '''
-        if self.logging : print("Halow message receive by drone "+str(self.nInstance)+" is "+str(msg))
+        if self.logging:
+            print("Halow message receive by drone " +
+                  str(self.nInstance) + " is " + str(msg))
         lMsg = msg.split(':')
-        if self.logging : print("splited msg give : "+str(lMsg))
-        if len(lMsg)==1:
+        if self.logging:
+            print("splited msg give : " + str(lMsg))
+        if len(lMsg) == 1:
             if msg == "STOP":
                 # stop all drone movements
                 self.stopDrone()
-                if self.logging : print("drone "+str(self.nInstance)+" stopped")
+                if self.logging:
+                    print("drone " + str(self.nInstance) + " stopped")
             elif msg == "START":
                 # start drone's movements
                 self.startMission()
             elif msg == "POS":
                 # answer the curent position of the drone
-                self.halowMsg = "POS:"+str(self.curLat)+";"+str(self.curLon)+";"+str(self.curAlt)
+                self.halowMsg = "POS:" + \
+                    str(self.curLat) + ";" + \
+                    str(self.curLon) + ";" + str(self.curAlt)
             else:
-                if self.logging : print("Message doesn't have the right format")
-        elif len(lMsg)==2:
+                if self.logging:
+                    print("Message doesn't have the right format")
+        elif len(lMsg) == 2:
             if lMsg[0] == "ALIGN":
                 # The drone is asked to be aligned by going to given point
                 self.stopDrone()
@@ -1025,24 +1152,26 @@ class Vehicle():
                 self.handleAlign(sMsg[0], sMsg[1])
                 self.halowMsg = "ALIGN:OK"
             elif lMsg[0] == "ALIGNED":
-                # List of the aligned drones to know to wich the video transmition have to be done
+                # List of the aligned drones to know to wich the video
+                # transmition have to be done
                 sMsg = lMsg[1].split(";")
                 first = sMsg[0]
-                sMsg.pop(0)
-                self.sendWifiOne(int(first),"video from "+str(self.nInstance)+":"+';'.join(sMsg))
+                tempMsg = "video::" + \
+                    str(self.nInstance) + ";" + ';'.join(sMsg) + ";" + str(0)
+                print("tempMsg : " + str(tempMsg))
+                self.sendWifi(int(first), tempMsg)
             elif lMsg[0] == "VID":
                 if lMsg[1] == "OK":
-                    if self.logging : print("Video have been sent")
+                    if self.logging:
+                        print("Video have been sent")
             else:
-                if self.logging : print("Message doesn't have the right format")
+                if self.logging:
+                    print("Message doesn't have the right format")
         else:
             time.sleep(0.1)
 
+    #################################### Drone mvmts #########################
 
-
-
-
-    #################################### Drone mvmts ####################################
     def startMission(self):
         '''
             Method to start the mission
@@ -1051,45 +1180,55 @@ class Vehicle():
         self.tDroneInstance.join()
         self.tAat.join()
         # We check if a mission have been provided to the drone
-        if len(self.wayPoints)<1:
+        if len(self.wayPoints) < 1:
             print("You have to import a mission first")
         # If the mission already started we just resume it
         elif self.tMission.is_alive():
             if not self.isOnMission:
-                if self.logging : print("Drone "+str(self.nInstance)+" continue the mission")
+                if self.logging:
+                    print("Drone " +
+                          str(self.nInstance) +
+                          " continue the mission")
                 try:
-                    self.sendCmdwControl(self.stopPos[0], self.stopPos[1], self.stopPos[2])
+                    self.sendCmdwControl(
+                        self.stopPos[0], self.stopPos[1], self.stopPos[2])
                 except e:
-                    if self.logging : print(e)
+                    if self.logging:
+                        print(e)
                 self.isOnMission = True
                 self.isStop = False
         # If the mission were not started, we start it
         else:
-            if self.logging : print(str(self.nInstance) + " launch mission")
+            if self.logging:
+                print(str(self.nInstance) + " launch mission")
             self.isOnMission = True
             self.isStop = False
             self.tMission.start()
 
-    
     def stopDrone(self):
         '''
             Method to stop the drone movements
         '''
-        if self.logging : print("stop drone "+str(self.nInstance))
+        if self.logging:
+            print("stop drone " + str(self.nInstance))
         # We stop the current mission
         self.isOnMission = False
-        self.isStop = True # to stop the current command
+        self.isStop = True  # to stop the current command
         # Wait for the drone to exit it's check in sendCmdWCtrl()
         time.sleep(1)
         # Save the position where the drone stopped
         self.stopPos = [self.curLat, self.curLon, self.curAlt]
-        self.isStop = False # to allow again to send new commands
-        # Send the drone to it's position just to be shure it doesn't go to an anwanted position 
-        self.vehicle.simple_goto(LocationGlobal(self.curLat, self.curLon, self.curAlt), airspeed=10)
-        
+        self.isStop = False  # to allow again to send new commands
+        # Send the drone to it's position just to be shure it doesn't go to an
+        # anwanted position
+        self.vehicle.simple_goto(
+            LocationGlobal(
+                self.curLat,
+                self.curLon,
+                self.curAlt),
+            airspeed=10)
 
-
-    def sendCmdwControl(self, lat, lon, alt, speed = 30):
+    def sendCmdwControl(self, lat, lon, alt, speed=30):
         '''
             Method to send the drone to a certain point + wait to be there
 
@@ -1102,35 +1241,46 @@ class Vehicle():
         # You should not use this method
         self.tDroneInstance.join()
         self.tAat.join()
-        if self.logging : print("drone "+ str(self.nInstance)+" goto : " + str(lat) + " " + str(lon) + " " + str(alt))
-        self.vehicle.simple_goto(LocationGlobal(lat, lon, self.curAlt), airspeed = speed)
-        while not self.isStop and (get_distance_metres(lat, lon, self.curLat, self.curLon)>1.2):
+        if self.logging:
+            print("drone " + str(self.nInstance) + " goto : " +
+                  str(lat) + " " + str(lon) + " " + str(alt))
+        self.vehicle.simple_goto(
+            LocationGlobal(
+                lat,
+                lon,
+                self.curAlt),
+            airspeed=speed)
+        while not self.isStop and (get_distance_metres(
+                lat, lon, self.curLat, self.curLon) > 1.2):
             dist = get_distance_metres(lat, lon, self.curLat, self.curLon)
-            self.vehicle.simple_goto(LocationGlobal(lat, lon, self.curAlt), airspeed = speed)
+            self.vehicle.simple_goto(
+                LocationGlobal(
+                    lat,
+                    lon,
+                    self.curAlt),
+                airspeed=speed)
             time.sleep(0.5)
-    
 
     def handleWayPoints(self):
         '''
             Method to run the mission given to the drone
         '''
-        # You should not use this method 
+        # You should not use this method
         i = 1
         maxId = len(self.wayPoints)
-        if self.logging : print(" Nb commandes : " + str(maxId))
-        while i<=maxId and self.running:
+        if self.logging:
+            print(" Nb commandes : " + str(maxId))
+        while i <= maxId and self.running:
             if self.isOnMission:
                 tempCmd = self.wayPoints[i]
                 lat = tempCmd[0]
                 lon = tempCmd[1]
                 alt = tempCmd[2]
                 self.sendCmdwControl(lat, lon, alt)
-                if not self.isStop: #if we exit sendCmdwControl because isStop, we dont want to go to another command as we want to continue the actual task when the drone is not stop anymore
+                if not self.isStop:  # if we exit sendCmdwControl because isStop, we dont want to go to another command as we want to continue the actual task when the drone is not stop anymore
                     i += 1
-        print("Mission finished by drone "+str(self.nInstance))
+        print("Mission finished by drone " + str(self.nInstance))
         self.vehicle.mode = VehicleMode("RTL")
-
-
 
     def handleAlign(self, lat, lon, alt="600"):
         '''
@@ -1139,26 +1289,24 @@ class Vehicle():
             Params:
                 lat : latitude of the destination point
                 lon : longitude of the destination point
-                alt : altitude of the destination point 
+                alt : altitude of the destination point
         '''
         # first we stop the drone
         self.stopDrone()
         # then we tell it where to go
-        if self.logging : print("Drone : "+str(self.nInstance)+"  aligning")
+        if self.logging:
+            print("Drone : " + str(self.nInstance) + "  aligning")
         self.sendCmdwControl(float(lat), float(lon), float(alt))
-        # Once it gets there, we inform the operator with a terminal print, and others drones with a wifi message
-        if self.logging : print("Drone : "+str(self.nInstance)+"  aligned !")
-        
-            
-            
-    
+        # Once it gets there, we inform the operator with a terminal print, and
+        # others drones with a wifi message
+        if self.logging:
+            print("Drone : " + str(self.nInstance) + "  aligned !")
 
+    #################################### Close the instance ##################
 
-        
-    #################################### Close the instance ####################################
     def close(self):
         '''
-            Method for clean closing the class 
+            Method for clean closing the class
         '''
         self.running = False
         self.tDroneInstance.join()
@@ -1173,18 +1321,14 @@ class Vehicle():
             Method for closing the window terminal of dronekit-sitl and mavproxy
         '''
         global winTerm
-        os.system("xdotool windowclose %s"%winTerm)
-
-
-
+        os.system("xdotool windowclose %s" % winTerm)
 
 
 ###################################################################
-if __name__=='__main__':
-     #--home=-35.363261,149.165230,584,353
-    ui1 = Vehicle({"nInstance":1, "logging":True})
-    ui2 = Vehicle({"nInstance":2, "logging":False})
+if __name__ == '__main__':
+    # --home=-35.363261,149.165230,584,353
+    ui1 = Vehicle({"nInstance": 1, "logging": True})
+    ui2 = Vehicle({"nInstance": 2, "logging": False})
     time.sleep(40)
 
     ui1.getWifiMapping()
-
