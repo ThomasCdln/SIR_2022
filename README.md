@@ -15,4 +15,7 @@ Repo for the work of Thomas CADALEN and Paul CHOCHILLON during their intership a
 
 
 
-On-going work, not working well for now
+On-going work, not working well 
+
+(https://github.com/ThomasCdln/SIR_2022/blob/64e1d623ef57af6fbaae856be829bfed9ab05bec/images/logo_PM.png)
+
