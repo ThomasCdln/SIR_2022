@@ -17,6 +17,6 @@ Repo for the work of Thomas CADALEN and Paul CHOCHILLON during their intership a
 
 On-going work, not working well 
 
-<img src="https://github.com/ThomasCdln/SIR_2022/blob/4c60a2bdb55a00e7e470eadb8bddc0189484c948/images/logo_upc.png" width=200 align=left /><img src="https://github.com/ThomasCdln/SIR_2022/blob/64e1d623ef57af6fbaae856be829bfed9ab05bec/images/logo_PM.png" width=450 align=right/>
+<img src="https://github.com/ThomasCdln/SIR_2022/blob/4c60a2bdb55a00e7e470eadb8bddc0189484c948/images/logo_upc.png" width=150 align=left /><img src="https://github.com/ThomasCdln/SIR_2022/blob/64e1d623ef57af6fbaae856be829bfed9ab05bec/images/logo_PM.png" width=450 align=right/>
 
 
