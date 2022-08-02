@@ -1,5 +1,7 @@
-# SIR_2022
-Comparing the efficiency between wifi Halow communication and multi-hop network for point of interest handdling by drones.
+# SIR_2022 at the Network Ingeneering Departement of the UPC 
+
+The goal is to compare the efficiency between wifi Halow communication and simple wifi communication to build a multi-hop network using drones.
+
 
 
 We use droneKit and droneKit SITL to simulate the drones 
