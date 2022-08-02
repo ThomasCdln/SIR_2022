@@ -17,7 +17,7 @@ In GCS-T.py, global varaibles at the beggining of the code allows you to easily 
 
 
 ## The mission flow
-All the drones takeoff at the same position and will follow their path until one of them detect (pass near of) a Point Of Interest. Then it will try to inform the GCS by sending it the "video" of this POI.
+All the drones takeoff at the same position (considered as the Ground Control Station position too) and will follow their mission until one of them detects (pass near ) a Point Of Interest. Then it will try to inform the GCS by sending it the "video" of this POI.
 * If the GCS is near enough (under 100 meters), the "video" is directly sended by wifi. 
 * If the GCS is too away (more than 100 meters) :
    * if the drone has an Halow interface, it will send its position to the GCS using Halow, and the GCS will determine the optimal positions for other drones in order to build the multi-hop network with lesser drones and it will send to each concerned drone that position using Halow. When they're all aligned, the video will be sended by the drone that detected the POI.
