@@ -18,10 +18,10 @@ In GCS-T.py, global varaibles at the beggining of the code allows you to easily 
 
 ## The mission flow
 All the drones takeoff at the same position and will follow their path until one of them detect (pass near of) a Point Of Interest. Then it will try to inform the GCS by sending it the "video" of this POI.
-If the GCS is near enough (under 100 meters), the "video" is directly sended by wifi. 
-If the GCS is too away (more than 100 meters) :
-  * if the drone has an Halow interface, it will send its position to the GCS using Halow, and the GCS will determine the optimal positions for other drones in order to build the multi-hop network with lesser drones and it will send to each concerned drone that position using Halow. When they're all aligned, the video will be sended by the drone that detected the POI.
-  * if the drone doesn't have an halow interface, it will dertermine the network map of all accessible drones, then it will ask for their positions and determine the needed position to build the multi-hop network with lesser drones, then it will send to the concerned drones the position where they have to go, once they're aligned, it will send to the GCS the "video" and wait for it's awnser before ordering to all drones to continue their missions.
+* If the GCS is near enough (under 100 meters), the "video" is directly sended by wifi. 
+* If the GCS is too away (more than 100 meters) :
+   * if the drone has an Halow interface, it will send its position to the GCS using Halow, and the GCS will determine the optimal positions for other drones in order to build the multi-hop network with lesser drones and it will send to each concerned drone that position using Halow. When they're all aligned, the video will be sended by the drone that detected the POI.
+   * if the drone doesn't have an halow interface, it will dertermine the network map of all accessible drones, then it will ask for their positions and determine the needed position to build the multi-hop network with lesser drones, then it will send to the concerned drones the position where they have to go, once they're aligned, it will send to the GCS the "video" and wait for it's awnser before ordering to all drones to continue their missions.
 
 Repo for the work of Thomas CADALEN and Paul CHOCHILLON during their intership at the University Polytecnica de Catalunya 
 
