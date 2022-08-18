@@ -61,7 +61,7 @@ def gps_newpos(lat, lon, bearing, distance):
 
 def nbDroneMin(lat1, lng1, lat2, lng2, alt=6378100 ) :
 	#si le GCS est dans le coin de la piste :
-	return max(1,ceil(gps_distance(lat1, lng1, lat2, lng2)/100)-1)
+	return max(1,ceil(2,5*gps_distance(lat1, lng1, lat2, lng2)/100)-1)
 	#si il est au centre: return ceil(max(1,distanceSol(lat1, lng1, lat2, lng2, alt )/100)/2)
 
 def pathMaker (lat1, lng1, lat2, lng2, lat3, lng3, alt, scanWidth=2, altDrone=5, nbDrone=1):
@@ -128,7 +128,7 @@ def zones(lat1, lng1, lat2, lng2, lat3, lng3,alt=6378100):
 	rwyForward = gps_bearing(lat1,lng1,lat2,lng2)
 	rwyRight = gps_bearing(lat1,lng1,lat3,lng3)
 	missionList={}
-	nbDrone=2*nbDroneMin(lat2,lng2,lat3,lng3,alt)
+	nbDrone=fnbDroneMin(lat2,lng2,lat3,lng3,alt)
 	print (str(nbDrone)+" zones")
 	widthZone= gps_distance(lat1,lng1,lat3,lng3)
 	longTot=gps_distance(lat1,lng1,lat2,lng2)
