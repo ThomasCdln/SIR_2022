@@ -6,6 +6,7 @@ We use droneKit and droneKit SITL to simulate the drones
 
 ## Setup the environment 
 You first have to download the image disk of the virutal machine you have to use to run your tests.
+Here is the link to download the image disk of the VM : https://drive.google.com/file/d/136QywCd9FQvQYxnn1TT4zZpFdvSS30Jx/view?usp=sharing
 
 A mission planner connection list is generated in /mnt/hgfs/connect/ , our advise is to use this folder as shared folder with the host. Doing so will facilitate the access to the file for giving it to mission planner 
 
